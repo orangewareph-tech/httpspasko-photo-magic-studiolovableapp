@@ -49,3 +49,13 @@ export async function cleanupExpiredOrders() {
   await supabaseAdmin.from("orders").delete().in("id", expired.map((o) => o.id));
   return expired.length;
 }
+
+/** Picks a random slideshow track (main + extra songs) so each render gets shuffled music. */
+export function pickMusic(settings: Awaited<ReturnType<typeof getSettings>>): { path: string | null; title: string | null } {
+  const tracks = [
+    ...(settings.music.path ? [{ path: settings.music.path, title: settings.music.title ?? "Christmas music" }] : []),
+    ...settings.musicExtra.filter((t) => t && t.path),
+  ];
+  if (!tracks.length) return { path: null, title: null };
+  return tracks[Math.floor(Math.random() * tracks.length)]!;
+}
