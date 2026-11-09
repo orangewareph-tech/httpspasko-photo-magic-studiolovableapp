@@ -21,10 +21,10 @@ export const testCheckoutPhoto = createServerFn({ method: "POST" })
   });
 // Public: returns a short-lived link to the shared slideshow song (site music, not customer data).
 export const testSlideshowMusic = createServerFn({ method: "GET" }).handler(async () => {
-  const { getSettings, signPaths, MEDIA_BUCKET } = await import("@/server/storage.server");
-  const s = await getSettings();
-  const path = s.music.path;
+  const { getSettings, signPaths, MEDIA_BUCKET, pickMusic } = await import("@/server/storage.server");
+  const s = pickMusic(await getSettings());
+  const path = s.path;
   if (!path) return { url: null as string | null, title: null as string | null };
   const url = (await signPaths(MEDIA_BUCKET, [path], 3600))[path] ?? null;
-  return { url, title: s.music.title };
+  return { url, title: s.title };
 });

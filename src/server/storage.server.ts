@@ -30,6 +30,7 @@ export async function getSettings() {
   return {
     pricing: (s["pricing"] as { basic: number; premium: number }) ?? { basic: 99, premium: 149 },
     music: (s["music"] as { url: string | null; title: string | null; path?: string | null }) ?? { url: null, title: null },
+    musicExtra: (Array.isArray(s["music_extra"]) ? s["music_extra"] : [{ path: "music/jingle-bells-vocal.mp3", title: "Jingle Bells" }]) as { path: string; title: string }[],
     payment: (s["payment"] as Record<string, string>) ?? {},
     retentionDays: Number(s["retention_days"] ?? 30),
   };

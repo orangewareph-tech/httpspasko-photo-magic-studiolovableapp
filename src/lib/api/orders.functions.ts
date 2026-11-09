@@ -83,8 +83,10 @@ export const getCustomerOrder = createServerFn({ method: "POST" })
     const done = o.status === "completed";
     const signed = await signPaths(ORDER_BUCKET, [o.original_path, ...(done ? o.result_paths : [])]);
     let musicUrl: string | null = null;
-    if (done && o.package === "premium" && settings.music.path) {
-      musicUrl = (await signPaths(MEDIA_BUCKET, [settings.music.path], 86400))[settings.music.path] ?? null;
+    const { pickMusic } = await import("@/server/storage.server");
+    const track = pickMusic(settings);
+    if (done && o.package === "premium" && track.path) {
+      musicUrl = (await signPaths(MEDIA_BUCKET, [track.path], 86400))[track.path] ?? null;
     }
     return {
       reference: o.reference,
@@ -100,7 +102,7 @@ export const getCustomerOrder = createServerFn({ method: "POST" })
       originalUrl: signed[o.original_path] ?? null,
       results: done ? o.result_paths.map((p) => signed[p]).filter((x): x is string => !!x) : [],
       musicUrl,
-      musicTitle: settings.music.title,
+      musicTitle: track.title,
       payTo: settings.payment[o.payment_method] ?? "",
     };
   });
