@@ -1,9 +1,23 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSlideshowRecorder, pickVideoType, wakeSlideshowAudio, SLIDESHOW_PHOTO_SECONDS, SLIDESHOW_TRANSITION_SECONDS } from "@/lib/slideshow-video";
+import { christmasTitleMotion, createSlideshowRecorder, pickVideoType, wakeSlideshowAudio, SLIDESHOW_PHOTO_SECONDS, SLIDESHOW_TRANSITION_SECONDS, SLIDESHOW_WIDTH, SLIDESHOW_HEIGHT } from "@/lib/slideshow-video";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("playable slideshow recordings", () => {
+  it("exports a vertical 9:16 frame", () => {
+    expect(SLIDESHOW_WIDTH / SLIDESHOW_HEIGHT).toBe(9 / 16);
+  });
+  it("pops in quickly and holds the greeting through 4 seconds", () => {
+    expect(christmasTitleMotion(0).scale).toBeCloseTo(0);
+    expect(christmasTitleMotion(0.3).scale).toBeGreaterThan(1);
+    expect(christmasTitleMotion(0.45).scale).toBe(1);
+    expect(christmasTitleMotion(4).opacity).toBe(1);
+  });
+  it("slowly fades the greeting after 4 seconds", () => {
+    expect(christmasTitleMotion(5).opacity).toBe(0.5);
+    expect(christmasTitleMotion(6).opacity).toBe(0);
+    expect(christmasTitleMotion(15).opacity).toBe(0);
+  });
   it("uses a fast 0.3-second transition without shortening the 15-second package", () => {
     expect(SLIDESHOW_TRANSITION_SECONDS).toBe(0.3);
     expect(SLIDESHOW_PHOTO_SECONDS * 5).toBe(15);

@@ -94,6 +94,12 @@
   --film-shadow: rgba(0, 0, 0, 0.55);
   --film-snow: #ffffff;
   --film-light: #f6d98c;
+  --film-red: #cf202f;
+  --film-red-dark: #8a1323;
+  --film-green: #16713c;
+  --film-pine: #19492e;
+  --film-needle: #34844e;
+  --film-gold: #e9ba54;
   --shadow-photo: 0 5px 14px color-mix(in oklab, var(--pine) 25%, transparent);
   --chart-1: oklch(0.55 0.21 27);
   --chart-2: oklch(0.45 0.12 155);

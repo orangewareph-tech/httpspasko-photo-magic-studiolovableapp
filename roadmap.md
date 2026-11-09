@@ -1,3 +1,7 @@
+# Festive Christmas slideshow
+- [x] Replace the film strip and old greetings with full-height photos, the timed Christmas title, and a permanent ribbon signature; retain 15 seconds and shuffled audio.
+- [x] Add corner greenery and ornaments, warm lights, golden glow, and continuous snowfall; verified title/fade screenshots, a downloaded 15.033-second 720×1280 video with music, phone layout without overflow, and 18 automated checks. Physical iPhone/Messenger saving remains unverified.
+
 # Slideshow effects and local saving
 - [x] Add 0.3-second transitions, layered snow, cinematic zoom/light sweeps while retaining music and the 15-second five-photo film strip.
 - [x] Provide prepared local ZIP downloads for all five photos and the slideshow, including phone saving guidance and tester support; retain single-photo/video saving.
