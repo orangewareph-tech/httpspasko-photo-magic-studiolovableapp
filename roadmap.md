@@ -1,3 +1,7 @@
+# App-wide Christmas magic
+- [x] Add lightweight snowfall and randomized fast Santa flybys with magical sparkling trails across all pages, without blocking controls.
+- [x] Add tap-enabled locally synthesized instrumental Jingle Bells and browser-spoken Santa laughter; stop when hidden or slideshow audio plays and respect reduced motion. Verified desktop/phone screenshots, sound enable/mute, pricing-page snow, slideshow protection, reduced motion, no overflow or runtime errors, and six tests. Physical phone audio quality remains unverified.
+
 # Festive Christmas slideshow
 - [x] Replace the film strip and old greetings with full-height photos, the timed Christmas title, and a permanent ribbon signature; retain 15 seconds and shuffled audio.
 - [x] Add corner greenery and ornaments, warm lights, golden glow, and continuous snowfall; verified title/fade screenshots, a downloaded 15.033-second 720×1280 video with music, phone layout without overflow, and 18 automated checks. Physical iPhone/Messenger saving remains unverified.

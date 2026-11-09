@@ -87,6 +87,11 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
   const [muted, setMuted] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("pasko-slideshow-audio", { detail: playing || making !== null }));
+    return () => { window.dispatchEvent(new CustomEvent("pasko-slideshow-audio", { detail: false })); };
+  }, [playing, making !== null]);
+
   function toggle() {
     if (!images.length || recording.current) return;
     const next = !playing;

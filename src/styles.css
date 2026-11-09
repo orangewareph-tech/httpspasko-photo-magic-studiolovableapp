@@ -221,3 +221,16 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-snow, .animate-twinkle, .animate-floaty { animation: none; }
 }
+
+.christmas-magic-layer { position: fixed; inset: 0; z-index: 45; overflow: hidden; pointer-events: none; }
+.christmas-magic-layer .animate-snow { text-shadow: 0 1px 4px var(--film-shadow); }
+.magic-flyby { position: absolute; left: 0; top: 0; width: 280px; opacity: 0; will-change: transform, opacity; }
+.magic-sleigh { position: relative; }
+.magic-sleigh img { width: 100%; height: auto; filter: drop-shadow(0 3px 8px var(--film-shadow)); }
+.magic-flyby[data-direction="left"] .magic-sleigh { transform: scaleX(-1); }
+.magic-trail { position: absolute; width: 240px; height: 100px; top: 38%; right: 80%; }
+.magic-dust { position: absolute; color: var(--gold); text-shadow: 0 0 7px var(--film-light); font-size: 15px; animation: magic-dust 0.85s ease-out infinite; }
+.magic-dust-0 { top: 5%; }.magic-dust-1 { top: 65%; }.magic-dust-2 { top: 30%; }.magic-dust-3 { top: 80%; }.magic-dust-4 { top: 45%; }
+@keyframes magic-dust { 0% { opacity: 0; transform: scale(0.3) translateY(0); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2) translateY(20px); } }
+@media (max-width: 600px) { .magic-flyby { width: 190px; } .magic-trail { width: 150px; } }
+@media (prefers-reduced-motion: reduce) { .christmas-magic-layer { display: none; } .magic-dust { animation: none; } }

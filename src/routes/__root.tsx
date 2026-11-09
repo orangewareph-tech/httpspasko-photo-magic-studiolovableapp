@@ -17,6 +17,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ChristmasMagic } from "@/components/brand/ChristmasMagic";
 import { setupServiceWorker } from "@/lib/pwa";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -137,6 +138,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
         <InstallPrompt />
+        <ChristmasMagic />
         <Toaster position="top-center" richColors />
       </LangProvider>
     </QueryClientProvider>
