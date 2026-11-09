@@ -42,7 +42,7 @@ Stored catalog keys are stable and never change (existing orders depend on them)
 ## Slideshow video (₱149)
 
 - Recorded entirely in the customer's browser (canvas + MediaRecorder, `src/lib/slideshow-video.ts`) from the already-loaded photos and the stored site music — no server video rendering.
-- 720×1080, 3 seconds per photo (≈15 s), cheerful crossfade + zoom transitions, twinkling gold sparkles.
+- 720×1280 vertical 9:16, 3 seconds per photo (15 s), soft crossfades and slow zoom, warm faded-film tint, subtle grain, and a continuously scrolling three-photo strip below the main photo. Playback and the downloaded video use the same drawing routine. The existing Christmas greeting and music are retained; no reference text, audio, or watermark is copied.
 - On the order page the video builds **automatically** when the photos load; a "Save slideshow video" button appears when done.
 - Current music: "Star ng Pasko (Intro)" — a 30-second cut of the uploaded licensed song with a fade-out, stored in the private `site-media` bucket. The admin can replace it anytime with the "Upload MP3" button.
 

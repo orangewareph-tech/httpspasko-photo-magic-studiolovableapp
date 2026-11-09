@@ -47,3 +47,4 @@ use the editor.
 
 - Offline support uses vite-plugin-pwa generateSW (outDir dist/client) registered only from `src/lib/pwa.ts`, which refuses dev/preview/iframe hosts; only built static assets are precached and pages are NetworkFirst, never photos or API data — keeps previews fresh and customer images private.
 - The ₱149 slideshow video is recorded locally only with all five photos and music ready, using explicit H.264/AAC MP4 or correctly named WebM with encoder-construction fallback; suspended audio defers to a tap, input changes/unmount cancel recording, interruptions stop animation, and recordings are previewed before saving — prevents incomplete, stale, or incompatible exports without uploading customer media.
+- Slideshow playback and recording share `drawFilmFrame` and timing constants; canvas colors read semantic film tokens from global CSS — keeps the visible preview consistent with the saved video without importing reference media.

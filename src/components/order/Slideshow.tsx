@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { recordSlideshow, wakeSlideshowAudio } from "@/lib/slideshow-video";
 import { deliverFile } from "@/lib/download";
 import { Button } from "@/components/ui/button";
+import { FilmSlideshowPreview } from "@/components/order/FilmSlideshowPreview";
 
 type SlideshowProps = { images: string[]; musicUrl: string | null; musicTitle: string | null; blobs?: Record<string, Blob>; fileName?: string; autoStart?: boolean };
 
@@ -78,16 +79,9 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, images.length]);
 
-  const [i, setI] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    if (!playing || !images.length) return;
-    const id = setInterval(() => setI((x) => (x + 1) % images.length), 3000);
-    return () => clearInterval(id);
-  }, [playing, images.length]);
 
   function toggle() {
     if (!images.length || recording.current) return;
@@ -98,22 +92,7 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
 
   return (
     <div className="overflow-hidden rounded-3xl bg-festive p-3 shadow-card">
-      <div className="relative mx-auto aspect-[9/16] w-full max-w-sm overflow-hidden rounded-2xl sepia-[.55]">
-        {images.map((src, idx) => (
-          <img key={src} src={src} alt={`Christmas photo ${idx + 1}`} className={`absolute inset-0 h-full w-full object-cover transition-all duration-[3000ms] ease-out ${idx === i ? "scale-110 opacity-100" : "scale-100 opacity-0"}`} />
-        ))}
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center text-snow drop-shadow-lg">
-          <p className="text-[10px] font-semibold tracking-[0.3em]">TO MY LOVING FAMILY</p>
-          <p className="mt-2 text-3xl font-bold tracking-[0.3em]">MERRY</p>
-          <p className="text-6xl" style={{ fontFamily: "'Great Vibes', cursive" }}>Christmas</p>
-          <p className="mt-2 px-4 text-[9px] font-semibold tracking-[0.15em]">WISHING YOU LOVE, JOY AND PEACE THIS CHRISTMAS</p>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 p-3">
-          {images.map((_, idx) => (
-            <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === i ? "w-6 bg-gold" : "w-1.5 bg-snow/60"}`} />
-          ))}
-        </div>
-      </div>
+      <FilmSlideshowPreview images={images} playing={playing} />
       <div className="flex items-center justify-between gap-2 p-3 text-pine-foreground">
         <div className="text-sm">
           <p className="font-semibold">🎵 Christmas Slideshow</p>
@@ -132,7 +111,7 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
         {making !== null ? (
           <div>
             <Progress value={making * 100} />
-            <p className="mt-1 flex items-center gap-1 text-xs"><Loader2 className="h-3 w-3 animate-spin" /> Creating your slideshow video with music… about 30 seconds. Keep this page open.</p>
+            <p className="mt-1 flex items-center gap-1 text-xs"><Loader2 className="h-3 w-3 animate-spin" /> Creating your slideshow video with music… about 15 seconds. Keep this page open.</p>
           </div>
         ) : video ? (
           <div className="space-y-3">

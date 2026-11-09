@@ -1,8 +1,11 @@
 // Records Christmas photos and music locally; never uploads customer media.
-const W = 720;
-const H = 1280;
+export const SLIDESHOW_WIDTH = 720;
+export const SLIDESHOW_HEIGHT = 1280;
+export const SLIDESHOW_PHOTO_SECONDS = 3;
+const W = SLIDESHOW_WIDTH;
+const H = SLIDESHOW_HEIGHT;
 const MAIN_H = Math.round(H * 0.75);
-const PER_PHOTO = 3;
+const PER_PHOTO = SLIDESHOW_PHOTO_SECONDS;
 const FADE = 1;
 
 const VIDEO_TYPES = ["video/mp4;codecs=avc1,mp4a.40.2", "video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/webm;codecs=vp8,opus", "video/webm;codecs=vp9,opus"];
@@ -67,7 +70,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function makeGrain(): HTMLCanvasElement {
+export function makeGrain(): HTMLCanvasElement {
   const g = document.createElement("canvas");
   g.width = 256; g.height = 256;
   const gctx = g.getContext("2d");
@@ -76,48 +79,62 @@ function makeGrain(): HTMLCanvasElement {
     for (let i = 0; i < data.data.length; i += 4) {
       const v = Math.random() * 255;
       data.data[i] = data.data[i + 1] = data.data[i + 2] = v;
-      data.data[i + 3] = 22;
+      data.data[i + 3] = 10;
     }
     gctx.putImageData(data, 0, 0);
   }
   return g;
 }
 
+export async function loadFilmPhoto(photo: Blob): Promise<ImageBitmap> {
+  const original = await createImageBitmap(photo);
+  try {
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, H / Math.max(original.width, original.height));
+    canvas.width = Math.round(original.width * scale);
+    canvas.height = Math.round(original.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Photo rendering is unavailable.");
+    ctx.filter = "sepia(0.28) saturate(0.8) contrast(0.92) brightness(0.96)";
+    ctx.drawImage(original, 0, 0, canvas.width, canvas.height);
+    return await createImageBitmap(canvas);
+  } finally { original.close(); }
+}
+
 // Vintage film-strip layout: main photo (top 75%), scrolling strip (bottom 25%), fixed greeting.
 export function drawFilmFrame(ctx: CanvasRenderingContext2D, bitmaps: ImageBitmap[], t: number, grain: HTMLCanvasElement) {
+  if (!bitmaps.length) return;
+  const tokens = getComputedStyle(document.documentElement);
+  const color = (name: string) => tokens.getPropertyValue(`--film-${name}`).trim();
   const idx = Math.min(Math.floor(t / PER_PHOTO), bitmaps.length - 1);
   const local = t - idx * PER_PHOTO;
-  ctx.filter = "sepia(0.55) saturate(0.85) contrast(0.9) brightness(1.03)";
-  ctx.fillStyle = "#2a1f16";
+  ctx.filter = "none";
+  ctx.fillStyle = color("background");
   ctx.fillRect(0, 0, W, H);
   const current = bitmaps[idx];
   if (current) drawCover(ctx, current, 1, 1 + 0.08 * (local / PER_PHOTO), 0, 0, W, MAIN_H);
-  const next = bitmaps[idx + 1];
+  const next = bitmaps[(idx + 1) % bitmaps.length];
   if (next && local > PER_PHOTO - FADE) drawCover(ctx, next, (local - (PER_PHOTO - FADE)) / FADE, 1, 0, 0, W, MAIN_H);
 
   // Film strip
   const stripY = MAIN_H;
   const stripH = H - MAIN_H;
-  ctx.fillStyle = "#14100c";
+  ctx.filter = "none";
+  ctx.fillStyle = color("border");
   ctx.fillRect(0, stripY, W, stripH);
-  ctx.fillStyle = "#e8dcc4";
-  for (let x = ((t * 40) % 36) - 36; x < W; x += 36) {
-    roundRect(ctx, x, stripY + 10, 18, 12, 3); ctx.fill();
-    roundRect(ctx, x, stripY + stripH - 22, 18, 12, 3); ctx.fill();
-  }
   const cellW = W / 3;
-  const pad = 14;
+  const pad = 10;
   const offset = (t * 40) % cellW;
   const first = Math.floor((t * 40) / cellW);
   for (let k = -1; k < 4; k++) {
     const img = bitmaps[(((k - first) % bitmaps.length) + bitmaps.length * 10) % bitmaps.length];
     const x = k * cellW + offset + pad;
-    const y = stripY + 32;
+    const y = stripY + 12;
     const w = cellW - pad * 2;
-    const h = stripH - 64;
+    const h = stripH - 24;
     ctx.save();
     roundRect(ctx, x, y, w, h, 14);
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = color("border");
     ctx.fill();
     roundRect(ctx, x + 4, y + 4, w - 8, h - 8, 11);
     ctx.clip();
@@ -127,38 +144,38 @@ export function drawFilmFrame(ctx: CanvasRenderingContext2D, bitmaps: ImageBitma
   ctx.filter = "none";
 
   // Warm tint + vignette + grain
-  ctx.fillStyle = "rgba(196, 150, 80, 0.16)";
+  ctx.fillStyle = color("tint");
   ctx.fillRect(0, 0, W, H);
   const vg = ctx.createRadialGradient(W / 2, MAIN_H / 2, W * 0.3, W / 2, MAIN_H / 2, W * 0.95);
-  vg.addColorStop(0, "rgba(0,0,0,0)");
-  vg.addColorStop(1, "rgba(30,18,8,0.45)");
+  vg.addColorStop(0, color("clear"));
+  vg.addColorStop(1, color("vignette"));
   ctx.fillStyle = vg;
   ctx.fillRect(0, 0, W, MAIN_H);
   ctx.save();
   ctx.translate(-Math.random() * 128, -Math.random() * 128);
-  ctx.fillStyle = ctx.createPattern(grain, "repeat") ?? "transparent";
+  ctx.fillStyle = ctx.createPattern(grain, "repeat") ?? color("clear");
   ctx.fillRect(0, 0, W + 128, H + 128);
   ctx.restore();
 
   // Fixed greeting
   const cy = MAIN_H / 2;
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = color("text");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowColor = color("shadow");
   ctx.shadowBlur = 12;
   ctx.font = "600 22px Outfit, sans-serif";
-  ctx.letterSpacing = "6px";
-  ctx.fillText("TO MY LOVING FAMILY", W / 2, cy - 150);
+  ctx.letterSpacing = "0px";
+  ctx.fillText("TO MY LOVING FAMILY", W / 2, MAIN_H * 0.1);
   ctx.font = "700 64px Outfit, sans-serif";
-  ctx.letterSpacing = "18px";
+  ctx.letterSpacing = "0px";
   ctx.fillText("MERRY", W / 2, cy - 70);
   ctx.letterSpacing = "0px";
   ctx.font = "130px 'Great Vibes', cursive";
   ctx.fillText("Christmas", W / 2, cy + 30);
-  ctx.font = "600 17px Outfit, sans-serif";
-  ctx.letterSpacing = "3px";
-  ctx.fillText("WISHING YOU LOVE, JOY AND PEACE THIS CHRISTMAS", W / 2, cy + 130);
+  ctx.font = "600 19px Outfit, sans-serif";
+  ctx.letterSpacing = "0px";
+  ctx.fillText("WISHING YOU LOVE, JOY AND PEACE THIS CHRISTMAS", W / 2, MAIN_H * 0.91, W - 48);
   ctx.letterSpacing = "0px";
   ctx.shadowBlur = 0;
 }
@@ -180,7 +197,7 @@ export async function recordSlideshow(photos: Blob[], music: Blob | null, onProg
       await wakeSlideshowAudio(audioCtx);
     }
     await Promise.all(["130px 'Great Vibes'", "700 64px Outfit", "600 22px Outfit"].map(f => document.fonts?.load(f).catch(() => {})));
-    for (const photo of photos) bitmaps.push(await createImageBitmap(photo));
+    for (const photo of photos) bitmaps.push(await loadFilmPhoto(photo));
     signal?.throwIfAborted();
     const canvas = document.createElement("canvas");
     canvas.width = W;
@@ -230,25 +247,29 @@ export async function recordSlideshow(photos: Blob[], music: Blob | null, onProg
       };
       document.addEventListener("visibilitychange", visibility);
       signal?.addEventListener("abort", abort, { once: true });
+      const animate = () => {
+        if (stopped) return;
+        source?.start();
+        const start = performance.now();
+        const tick = () => {
+          if (stopped) return;
+          const t = (performance.now() - start) / 1000;
+          if (t >= total) { recorder.stop(); return; }
+          draw(t);
+          onProgress(t / total);
+          frame = requestAnimationFrame(tick);
+        };
+        frame = requestAnimationFrame(tick);
+      };
       try {
         signal?.throwIfAborted();
         draw(0);
-        recorder.start();
-        source?.start();
+        recorder.start(250);
+        animate();
       } catch (error) {
         fail(error instanceof Error ? error : new Error("Could not start video recording."));
         return;
       }
-      const start = performance.now();
-      const tick = () => {
-        if (stopped) return;
-        const t = (performance.now() - start) / 1000;
-        if (t >= total) { recorder.stop(); return; }
-        draw(t);
-        onProgress(t / total);
-        frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
     });
     const mime = recorder.mimeType || type.mime;
     const blob = new Blob(chunks, { type: mime.split(";")[0] ?? type.mime });

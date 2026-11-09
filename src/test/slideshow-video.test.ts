@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSlideshowRecorder, pickVideoType, wakeSlideshowAudio } from "@/lib/slideshow-video";
+import { createSlideshowRecorder, pickVideoType, wakeSlideshowAudio, SLIDESHOW_PHOTO_SECONDS } from "@/lib/slideshow-video";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("playable slideshow recordings", () => {
+  it("keeps all five photos in a 15-second slideshow", () => {
+    expect(SLIDESHOW_PHOTO_SECONDS * 5).toBe(15);
+  });
   it("falls back to WebM when advertised MP4 encoders cannot initialize", () => {
     const attempts: string[] = [];
     vi.stubGlobal("MediaRecorder", class {

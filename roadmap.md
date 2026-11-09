@@ -1,4 +1,5 @@
 # Reference UI update
+- [x] Match the uploaded video's warm photo fades and scrolling strip in playback and downloads; retained Christmas greeting/music and 15-second timing. Browser recording reached 14.9 seconds with audio, downloaded and played, with no mobile overflow; 11 slideshow tests pass.
 - [x] Scan slideshow rendering failures, fix recording fallback and lifecycle handling, and verify a downloaded 30-second five-photo video plays with music and no mobile overflow; physical iPhone/Messenger remains unverified.
 - [x] Fix slideshow recording/download compatibility; verified a 30-second five-photo file downloads and plays with an audio track, with 40 tests passing. Physical iPhone/Messenger saving remains unverified.
 - [x] Match the snowy Christmas reference, photo collage, pricing, and benefit strip.

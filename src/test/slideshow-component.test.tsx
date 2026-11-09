@@ -3,8 +3,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Slideshow } from "@/components/order/Slideshow";
 
 const mocks = vi.hoisted(() => ({ record: vi.fn(), wake: vi.fn() }));
-vi.mock("@/lib/slideshow-video", () => ({ recordSlideshow: mocks.record, wakeSlideshowAudio: mocks.wake }));
-beforeEach(() => { vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {}); });
+vi.mock("@/lib/slideshow-video", async (importOriginal) => ({ ...await importOriginal<typeof import("@/lib/slideshow-video")>(), recordSlideshow: mocks.record, wakeSlideshowAudio: mocks.wake }));
+beforeEach(() => {
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+});
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.resetAllMocks(); vi.restoreAllMocks(); });
 
 it("defers blocked auto-recording until a tap and still releases retry after cleanup fails", async () => {
