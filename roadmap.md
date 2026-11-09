@@ -1,7 +1,7 @@
 # Slideshow effects and local saving
-- [ ] Add quick transitions, snow, and cinematic motion while retaining music and the 15-second five-photo film strip.
-- [ ] Provide prepared local downloads for all five photos and the slideshow, including phone saving guidance and tester support.
-- [ ] Verify recording, playback, downloaded archive contents, and phone layout; physical iPhone/Messenger saving requires device testing.
+- [x] Add 0.3-second transitions, layered snow, cinematic zoom/light sweeps while retaining music and the 15-second five-photo film strip.
+- [x] Provide prepared local ZIP downloads for all five photos and the slideshow, including phone saving guidance and tester support; retain single-photo/video saving.
+- [x] Verify recording with catalog photos and actual site music: 15.007-second video plays with audio, ZIP contains five photos plus video, simulated iPhone download succeeds, no phone overflow, 25 relevant tests pass. Physical iPhone/Messenger and paid-order customer saving remain unverified.
 
 # Reference UI update
 - [x] Match the uploaded video's warm photo fades and scrolling strip in playback and downloads; retained Christmas greeting/music and 15-second timing. Browser recording reached 14.9 seconds with audio, downloaded and played, with no mobile overflow; 11 slideshow tests pass.

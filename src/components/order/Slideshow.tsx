@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clapperboard, Download, ExternalLink, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { Clapperboard, ExternalLink, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { recordSlideshow, wakeSlideshowAudio } from "@/lib/slideshow-video";

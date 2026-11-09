@@ -5,7 +5,7 @@ import { deliverFile, needsLongPressSave } from "@/lib/download";
 import { LocalPackageDownload } from "@/components/LocalDownloadControls";
 import { SaveImageSheet, type SaveTarget } from "@/components/SaveImageSheet";
 import { toast } from "sonner";
-import { Copy, Download, FileArchive, Hourglass, Loader2, Share2, ShieldCheck, Sparkles, XCircle, Facebook, MessageCircle } from "lucide-react";
+import { Copy, Download, Hourglass, Loader2, Share2, ShieldCheck, Sparkles, XCircle, Facebook, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slideshow } from "@/components/order/Slideshow";
