@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSlideshowRecorder, pickVideoType, wakeSlideshowAudio, SLIDESHOW_PHOTO_SECONDS } from "@/lib/slideshow-video";
+import { createSlideshowRecorder, pickVideoType, wakeSlideshowAudio, SLIDESHOW_PHOTO_SECONDS, SLIDESHOW_TRANSITION_SECONDS } from "@/lib/slideshow-video";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe("playable slideshow recordings", () => {
+  it("uses a fast 0.3-second transition without shortening the 15-second package", () => {
+    expect(SLIDESHOW_TRANSITION_SECONDS).toBe(0.3);
+    expect(SLIDESHOW_PHOTO_SECONDS * 5).toBe(15);
+  });
   it("keeps all five photos in a 15-second slideshow", () => {
     expect(SLIDESHOW_PHOTO_SECONDS * 5).toBe(15);
   });

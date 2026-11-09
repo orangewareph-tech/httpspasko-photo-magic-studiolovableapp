@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { deliverFile, downloadBlob, isInAppBrowser, needsLongPressSave } from "@/lib/download";
+import { useEffect, useMemo, useState } from "react";
+import { deliverFile, needsLongPressSave } from "@/lib/download";
+import { LocalPackageDownload } from "@/components/LocalDownloadControls";
 import { SaveImageSheet, type SaveTarget } from "@/components/SaveImageSheet";
 import { toast } from "sonner";
 import { Copy, Download, FileArchive, Hourglass, Loader2, Share2, ShieldCheck, Sparkles, XCircle, Facebook, MessageCircle } from "lucide-react";
@@ -43,18 +44,17 @@ function OrderPage() {
   const qc = useQueryClient();
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", reference, t],
-    queryFn: () => getCustomerOrder({ data: { reference, token: t! } }),
+    queryFn: () => { if (!t) throw new Error("Order link is incomplete"); return getCustomerOrder({ data: { reference, token: t } }); },
     enabled: !!t,
     refetchInterval: (q) => (q.state.data && q.state.data.status !== "completed" && q.state.data.status !== "failed" ? 20_000 : false),
   });
   const [payRef, setPayRef] = useState("");
   const [sending, setSending] = useState(false);
-  const [zipping, setZipping] = useState(false);
-  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
   const [saveTarget, setSaveTarget] = useState<SaveTarget>(null);
   // Preload photos so a tap can save instantly — iPhone blocks saves that wait on the network.
   const [blobs, setBlobs] = useState<Record<string, Blob>>({});
   const resultKey = order?.results?.join("|") ?? "";
+  const localPhotos = useMemo(() => resultKey.split("|").flatMap((u, i) => { const blob = blobs[u]; return blob ? [{ blob, name: `${reference}-${i + 1}.png` }] : []; }), [resultKey, blobs, reference]);
   useEffect(() => {
     if (!resultKey) return;
     let cancelled = false;
@@ -73,13 +73,14 @@ function OrderPage() {
   const stepIndex = STEPS.indexOf(order.status as OrderStatus);
 
   async function sendRef() {
+    if (!t) return;
     if (payRef.trim().length < 4) {
       toast.error("Enter the reference number from your payment receipt.");
       return;
     }
     setSending(true);
     try {
-      await submitPaymentReference({ data: { reference, token: t!, paymentReference: payRef.trim() } });
+      await submitPaymentReference({ data: { reference, token: t, paymentReference: payRef.trim() } });
       toast.success("Thank you! We'll verify your payment shortly.");
       qc.invalidateQueries({ queryKey: ["order", reference, t] });
     } catch (e) {
@@ -89,42 +90,11 @@ function OrderPage() {
     }
   }
 
-  // Step 1: build the ZIP. Step 2: a separate tap saves it — iPhone blocks saves that wait.
-  async function prepareZip() {
-    setZipping(true);
-    try {
-      const { default: JSZip } = await import("jszip");
-      const zip = new JSZip();
-      await Promise.all(order!.results.map(async (u, i) => zip.file(`${reference}-${i + 1}-${STYLES[i]?.key ?? "xmas"}.png`, blobs[u] ?? (await fetchBlob(u)))));
-      setZipBlob(await zip.generateAsync({ type: "blob", compression: "STORE" }));
-    } catch {
-      toast.error("Could not create ZIP. Please download photos one by one.");
-    } finally {
-      setZipping(false);
-    }
-  }
-
-  const allReady = order.results.length > 0 && order.results.every((u) => blobs[u]);
-  function saveAllToPhotos() {
-    if (isInAppBrowser()) {
-      const u = order!.results[0]!;
-      setSaveTarget({ src: u, blob: blobs[u], name: `${reference}-1.png` });
-      toast.info("Save each photo with a long press. / I-save ang bawat photo sa matagal na pagpindot.");
-      return;
-    }
-    const files = order!.results.map((u, i) => new File([blobs[u]!], `${reference}-${i + 1}.png`, { type: "image/png" }));
-    const touch = matchMedia("(pointer: coarse)").matches;
-    if (touch && navigator.canShare?.({ files })) {
-      navigator.share({ files, title: "My Pasko Photo Magic photos" }).catch(() => {});
-    } else {
-      files.forEach((f, i) => setTimeout(() => downloadBlob(f, f.name), i * 400));
-    }
-  }
-
   async function shareNative() {
+    const first = order?.results[0];
+    if (!first || !blobs[first]) return;
     try {
-      const first = order!.results[0]!;
-      const blob = blobs[first] ?? (await fetchBlob(first));
+      const blob = blobs[first];
       const file = new File([blob], "xmasmagic.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "My Christmas photo", text: "Made with Pasko Photo Magic 🎄" });
@@ -208,12 +178,7 @@ function OrderPage() {
       {order.status === "completed" && (
         <div className="mt-6 space-y-6">
           <div className="flex flex-wrap gap-2">
-            <Button variant="festive" size="lg" onClick={saveAllToPhotos} disabled={!allReady}><Download /> {allReady ? "Save all 5 photos" : "Loading photos…"}</Button>
-            {zipBlob ? (
-              <Button variant="outline" size="lg" className="rounded-full" onClick={() => downloadBlob(zipBlob, `${reference}-PaskoPhotoMagic.zip`)}><FileArchive /> Save ZIP file</Button>
-            ) : (
-              <Button variant="outline" size="lg" className="rounded-full" onClick={prepareZip} disabled={zipping}><FileArchive /> {zipping ? "Preparing ZIP…" : "Prepare ZIP"}</Button>
-            )}
+            <LocalPackageDownload photos={localPhotos} name={`${reference}-PaskoPhotoMagic`} />
             <Button variant="outline" size="lg" className="rounded-full" onClick={shareNative}><Share2 /> Share photo</Button>
             <Button asChild variant="outline" size="lg" className="rounded-full">
               <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(site)}`} target="_blank" rel="noreferrer"><Facebook /> Facebook</a>
@@ -231,7 +196,7 @@ function OrderPage() {
                 <img src={u} alt={STYLES[i]?.name} loading="lazy" className="aspect-[2/3] w-full select-auto object-cover [-webkit-touch-callout:default]" />
                 <div className="flex items-center justify-between gap-2 p-3">
                   <p className="line-clamp-1 text-xs font-semibold text-pine">{STYLES[i]?.name}</p>
-                  <Button size="icon" variant="ghost" aria-label="Download" disabled={!blobs[u] && !needsLongPressSave()} onClick={() => { const name = `${reference}-${i + 1}.png`; if (needsLongPressSave()) setSaveTarget({ src: u, blob: blobs[u], name }); else void deliverFile(blobs[u]!, name); }}>
+                  <Button size="icon" variant="ghost" aria-label="Download" disabled={!blobs[u]} onClick={() => { const name = `${reference}-${i + 1}.png`; const blob = blobs[u]; if (!blob) return; if (needsLongPressSave()) setSaveTarget({ src: u, blob, name }); else void deliverFile(blob, name).catch(() => toast.error("Please try saving again.")); }}>
                     <Download />
                   </Button>
                 </div>

@@ -3,6 +3,7 @@ import { ExternalLink, Hand, ImageDown } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/lib/i18n";
+import { LocalFileSave } from "@/components/LocalDownloadControls";
 
 export type SaveTarget = { src: string; blob?: Blob | undefined; name: string } | null;
 
@@ -55,6 +56,7 @@ export function SaveImageSheet({ target, onClose }: { target: SaveTarget; onClos
             <a href={url} target="_blank" rel="noopener noreferrer"><ExternalLink /> {t.open}</a>
           </Button>
         )}
+        {target?.blob && <LocalFileSave blob={target.blob} name={target.name} label="Save photo to phone" />}
         <p className="text-center text-xs text-muted-foreground">{t.hint}</p>
       </DialogContent>
     </Dialog>

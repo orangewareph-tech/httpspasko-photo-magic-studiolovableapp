@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Clapperboard, Download, ExternalLink, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { recordSlideshow, wakeSlideshowAudio } from "@/lib/slideshow-video";
-import { deliverFile } from "@/lib/download";
+import { LocalFileSave, LocalPackageDownload } from "@/components/LocalDownloadControls";
 import { Button } from "@/components/ui/button";
 import { FilmSlideshowPreview } from "@/components/order/FilmSlideshowPreview";
 
@@ -18,6 +18,9 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
   const [video, setVideo] = useState<{ blob: Blob; ext: string; url: string } | null>(null);
   const [error, setError] = useState("");
   const [needsTap, setNeedsTap] = useState(false);
+  const [loadedPhotos, setLoadedPhotos] = useState<Blob[]>([]);
+  const packagePhotos = useMemo(() => loadedPhotos.map((blob, i) => ({ blob, name: `pasko-${i + 1}.png` })), [loadedPhotos]);
+  const packageVideo = useMemo(() => video ? { blob: video.blob, name: `${fileName}.${video.ext}` } : undefined, [video, fileName]);
   const recording = useRef(false);
   const mounted = useRef(true);
   const pending = useRef<AbortController | null>(null);
@@ -56,6 +59,7 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
         return response.blob();
       };
       const photos = await Promise.all(images.map(u => blobs[u] ?? load(u)));
+      if (mounted.current) setLoadedPhotos(photos);
       const music = musicUrl ? await load(musicUrl) : null;
       controller.signal.throwIfAborted();
       const r = await recordSlideshow(photos, music, p => { if (mounted.current) setMaking(p); }, audioContext, controller.signal);
@@ -117,9 +121,10 @@ function SlideshowPlayer({ images, musicUrl, musicTitle, blobs = {}, fileName = 
           <div className="space-y-3">
             <video src={video.url} controls playsInline preload="metadata" aria-label="Slideshow video preview" className="max-h-96 w-full rounded-xl" onError={() => { setError("This browser cannot play the video. Open this page in Safari or Chrome and create it again."); setVideo(null); }} />
             <div className="flex flex-wrap gap-2">
-            <Button variant="gold" onClick={() => void deliverFile(video.blob, `${fileName}.${video.ext}`)}><Download /> Save slideshow video</Button>
+            <LocalFileSave blob={video.blob} name={`${fileName}.${video.ext}`} label="Save slideshow video" />
             <Button asChild variant="snow"><a href={video.url} target="_blank" rel="noopener noreferrer"><ExternalLink /> Open video</a></Button>
             </div>
+            <LocalPackageDownload photos={packagePhotos} video={packageVideo} name={`${fileName}-complete-package`} />
             {video.ext === "webm" && <p className="text-xs text-pine-foreground/80">WebM video · For an iPhone Photos-compatible MP4, open this page in Safari and create the video there.</p>}
           </div>
         ) : (

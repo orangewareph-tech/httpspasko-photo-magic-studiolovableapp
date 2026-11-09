@@ -11,18 +11,36 @@ export function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-export async function deliverFile(blob: Blob, filename: string) {
-  const file = new File([blob], filename, { type: blob.type || "image/png" });
+export async function deliverFile(blob: Blob, filename: string): Promise<"shared" | "cancelled" | "downloaded"> {
+  const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
   const touch = typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
   if (touch && navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: filename });
-      return;
+      return "shared";
     } catch (e) {
-      if ((e as DOMException).name === "AbortError") return;
+      if ((e as DOMException).name === "AbortError") return "cancelled";
+      // An awaited share failure has lost iOS tap permission. Ask for a fresh tap.
+      throw new Error("Could not open phone saving. Try Download file, or open this page in Safari / Chrome.");
     }
   }
   downloadBlob(blob, filename);
+  return "downloaded";
+}
+
+export type LocalPhoto = { blob: Blob; name: string };
+
+/** Prepare before the saving tap; customer media is never written to localStorage or a server. */
+export async function buildLocalPackage(photos: LocalPhoto[], video?: LocalPhoto): Promise<Blob> {
+  if (photos.length !== 5 || photos.some(photo => photo.blob.size === 0)) throw new Error("All 5 photos must be ready before saving.");
+  const { default: JSZip } = await import("jszip");
+  const zip = new JSZip();
+  photos.forEach((photo, i) => zip.file(`${String(i + 1).padStart(2, "0")}-${photo.name}`, photo.blob));
+  if (video) {
+    if (!video.blob.size) throw new Error("The slideshow is not ready yet.");
+    zip.file(video.name, video.blob);
+  }
+  return zip.generateAsync({ type: "blob", compression: "STORE", mimeType: "application/zip" });
 }
 
 export function dataUrlToBlob(dataUrl: string): Blob {

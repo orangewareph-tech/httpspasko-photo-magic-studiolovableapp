@@ -10,6 +10,7 @@ import { testCheckoutPhoto, testSlideshowMusic } from "@/lib/api/photo-test.func
 import { Slideshow } from "@/components/order/Slideshow";
 import { STYLES } from "@/lib/catalog";
 import type { TemplateId } from "@/lib/order-process";
+import { LocalPackageDownload } from "@/components/LocalDownloadControls";
 
 type Slot = { image: string; error: string; busy: boolean };
 
@@ -53,6 +54,7 @@ export function CheckoutPhotoTest({ photo, template, pkg = "basic" }: { photo: s
   const slideKey = slideImages.join("|");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const slideBlobs = useMemo(() => Object.fromEntries(slideImages.map(u => [u, dataUrlToBlob(u)])), [slideKey]);
+  const localPhotos = useMemo(() => Object.entries(slideBlobs).map(([, blob], i) => ({ blob, name: `pasko-test-${i + 1}.png` })), [slideBlobs]);
 
   return <>
     <Button type="button" variant="festive" size="lg" className="mt-4 h-16 w-full text-lg font-bold shadow-lg" onClick={() => { setOpen(true); setSlots(emptySlots()); }}><FlaskConical className="size-6" />{premium ? "TEST ₱149 — 5 photos + slideshow & music" : "TEST PHOTO — Try 5 styles"}</Button>
@@ -87,6 +89,7 @@ export function CheckoutPhotoTest({ photo, template, pkg = "basic" }: { photo: s
             );
           })}
         </div>
+        {!busy && finished.length === 5 && <LocalPackageDownload photos={localPhotos} name="pasko-test-photos" />}
         {premium && !busy && finished.length === 5 && music && (
           <Slideshow images={slideImages} musicUrl={music.url} musicTitle={music.title} blobs={slideBlobs} fileName="pasko-test-slideshow" autoStart />
         )}

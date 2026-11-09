@@ -6,7 +6,8 @@ const W = SLIDESHOW_WIDTH;
 const H = SLIDESHOW_HEIGHT;
 const MAIN_H = Math.round(H * 0.75);
 const PER_PHOTO = SLIDESHOW_PHOTO_SECONDS;
-const FADE = 1;
+export const SLIDESHOW_TRANSITION_SECONDS = 0.3;
+const FADE = SLIDESHOW_TRANSITION_SECONDS;
 
 const VIDEO_TYPES = ["video/mp4;codecs=avc1,mp4a.40.2", "video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/webm;codecs=vp8,opus", "video/webm;codecs=vp9,opus"];
 
@@ -112,7 +113,8 @@ export function drawFilmFrame(ctx: CanvasRenderingContext2D, bitmaps: ImageBitma
   ctx.fillStyle = color("background");
   ctx.fillRect(0, 0, W, H);
   const current = bitmaps[idx];
-  if (current) drawCover(ctx, current, 1, 1 + 0.08 * (local / PER_PHOTO), 0, 0, W, MAIN_H);
+  const motion = 1 - Math.pow(1 - Math.min(local / PER_PHOTO, 1), 2);
+  if (current) drawCover(ctx, current, 1, 1 + 0.14 * motion, 0, 0, W, MAIN_H);
   const next = bitmaps[(idx + 1) % bitmaps.length];
   if (next && local > PER_PHOTO - FADE) drawCover(ctx, next, (local - (PER_PHOTO - FADE)) / FADE, 1, 0, 0, W, MAIN_H);
 
@@ -155,6 +157,32 @@ export function drawFilmFrame(ctx: CanvasRenderingContext2D, bitmaps: ImageBitma
   ctx.translate(-Math.random() * 128, -Math.random() * 128);
   ctx.fillStyle = ctx.createPattern(grain, "repeat") ?? color("clear");
   ctx.fillRect(0, 0, W + 128, H + 128);
+  ctx.restore();
+
+  // Gentle cinematic gold light sweep, never a strobe or full-frame flash.
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  const sweepX = ((t * 115) % (W * 2)) - W / 2;
+  const sweep = ctx.createLinearGradient(sweepX - 150, 0, sweepX + 150, MAIN_H);
+  sweep.addColorStop(0, color("clear"));
+  sweep.addColorStop(0.5, color("light"));
+  sweep.addColorStop(1, color("clear"));
+  ctx.fillStyle = sweep;
+  ctx.fillRect(0, 0, W, MAIN_H);
+  ctx.restore();
+
+  // Deterministic layered snowfall: identical in the player and local recording.
+  ctx.save();
+  ctx.fillStyle = color("snow");
+  for (let i = 0; i < 64; i++) {
+    const depth = (i % 3) + 1;
+    const x = ((i * 137.5 + Math.sin(t * 0.6 + i) * 28 + t * 12) % W + W) % W;
+    const y = ((i * 83.7 + t * (24 + depth * 16)) % (H + 20)) - 10;
+    ctx.globalAlpha = 0.3 + depth * 0.17;
+    ctx.beginPath();
+    ctx.arc(x, y, depth * 1.25, 0, Math.PI * 2);
+    ctx.fill();
+  }
   ctx.restore();
 
   // Fixed greeting
@@ -221,6 +249,7 @@ export async function recordSlideshow(photos: Blob[], music: Blob | null, onProg
     }
     rec = createSlideshowRecorder(stream);
     const chunks: Blob[] = [];
+    let recordedMs = total * 1000;
     const recorder = rec;
     const grain = makeGrain();
     const draw = (t: number) => drawFilmFrame(ctx, bitmaps, t, grain);
@@ -254,7 +283,7 @@ export async function recordSlideshow(photos: Blob[], music: Blob | null, onProg
         const tick = () => {
           if (stopped) return;
           const t = (performance.now() - start) / 1000;
-          if (t >= total) { recorder.stop(); return; }
+          if (t >= total) { recordedMs = t * 1000; recorder.stop(); return; }
           draw(t);
           onProgress(t / total);
           frame = requestAnimationFrame(tick);
@@ -272,8 +301,12 @@ export async function recordSlideshow(photos: Blob[], music: Blob | null, onProg
       }
     });
     const mime = recorder.mimeType || type.mime;
-    const blob = new Blob(chunks, { type: mime.split(";")[0] ?? type.mime });
+    let blob = new Blob(chunks, { type: mime.split(";")[0] ?? type.mime });
     if (blob.size < 1024) throw new Error("The video recording was empty. Please try again.");
+    if (mime.startsWith("video/webm")) {
+      const { default: fixWebmDuration } = await import("fix-webm-duration");
+      blob = await fixWebmDuration(blob, recordedMs, { logger: false });
+    }
     onProgress(1);
     return { blob, ext: mime.startsWith("video/mp4") ? "mp4" : "webm" };
   } finally {
