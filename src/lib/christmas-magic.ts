@@ -35,6 +35,20 @@ export function santaGreeting(random = Math.random) {
   return { text: SANTA_GREETINGS[index], parts: GREETING_PARTS[index] ?? [] };
 }
 
+export function createSantaGreetingShuffle(random = Math.random) {
+  let remaining: number[] = [];
+  let previous: number | undefined;
+  return () => {
+    if (remaining.length === 0) remaining = [0, 1, 2];
+    const candidates = remaining.filter(index => index !== previous);
+    const pick = Math.min(candidates.length - 1, Math.max(0, Math.floor(random() * candidates.length)));
+    const index = candidates[pick] ?? remaining[0] ?? 0;
+    remaining = remaining.filter(value => value !== index);
+    previous = index;
+    return { text: SANTA_GREETINGS[index], parts: GREETING_PARTS[index] ?? [] };
+  };
+}
+
 // Approach the screen's center, then recede; never exceed device volume.
 export function santaVolume(progress: number) {
   const proximity = Math.sin(Math.PI * Math.min(1, Math.max(0, progress)));
@@ -46,6 +60,7 @@ export class ChristmasSound {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private generation = 0;
   private greetingTimer: ReturnType<typeof setTimeout> | undefined;
+  private nextGreeting = createSantaGreetingShuffle();
 
   async start() {
     this.stop();
@@ -83,7 +98,7 @@ export class ChristmasSound {
     clearTimeout(this.greetingTimer);
     window.speechSynthesis.cancel();
     const generation = this.generation;
-    const greeting = santaGreeting();
+    const greeting = this.nextGreeting();
     const started = performance.now();
     const available = window.speechSynthesis.getVoices();
     const selected = available.find(v => /david|george|daniel|male/i.test(v.name)) ?? available.find(v => v.lang.startsWith("en")) ?? null;

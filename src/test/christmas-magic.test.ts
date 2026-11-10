@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { magicFlight, santaGreeting, santaVolume } from "@/lib/christmas-magic";
+import { createSantaGreetingShuffle, magicFlight, santaGreeting, santaVolume } from "@/lib/christmas-magic";
 
 describe("Christmas flyby paths", () => {
   it("enters and exits outside the screen toward the right", () => {
@@ -18,6 +18,16 @@ describe("Christmas flyby paths", () => {
 });
 
 describe("Santa flyby greetings", () => {
+  it("uses all three greetings every three passes without repeating at cycle boundaries", () => {
+    for (const random of [() => 0, () => 0.4, () => 0.99]) {
+      const next = createSantaGreetingShuffle(random);
+      const phrases = Array.from({ length: 30 }, () => next().text);
+      for (let i = 0; i < phrases.length; i += 3) {
+        expect(new Set(phrases.slice(i, i + 3)).size).toBe(3);
+      }
+      for (let i = 1; i < phrases.length; i++) expect(phrases[i]).not.toBe(phrases[i - 1]);
+    }
+  });
   it("randomly selects each of the three requested phrases", () => {
     expect(santaGreeting(() => 0).text).toBe("Merry Christmas!");
     expect(santaGreeting(() => 0.4).text).toBe("Hohohoho!");

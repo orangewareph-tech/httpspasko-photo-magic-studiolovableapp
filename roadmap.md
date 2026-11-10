@@ -1,4 +1,5 @@
 # App-wide Christmas magic
+- [ ] Use all three Santa greetings in shuffled cycles without consecutive repeats, verify, and request publishing.
 - [x] Automatically enable Santa sound after the first page interaction while retaining mute and slideshow protection; seven tests pass, phone browser confirms first tap enables sound and manual mute persists, build OK. Physical phone audio remains unverified.
 - [x] Shuffle the three requested Santa greetings on every audible flyby and raise voice volume near the screen center; five tests pass, phone sound enable/mute and increasing speech volume verified with browser speech instrumentation, no overflow or runtime errors, build OK. Actual device speech quality remains unverified; existing media interruption guards retained.
 - [x] Add lightweight snowfall and randomized fast Santa flybys with magical sparkling trails across all pages, without blocking controls.
