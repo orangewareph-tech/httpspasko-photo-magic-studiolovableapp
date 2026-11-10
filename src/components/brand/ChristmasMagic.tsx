@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Snowfall } from "@/components/brand/Snowfall";
 import { ChristmasSound, magicFlight } from "@/lib/christmas-magic";
 import santa from "@/assets/santa-flyby.png";
+import poster from "@/assets/eyeberry-gold-poster.jpg.asset.json";
 
 export function ChristmasMagic() {
   const flight = useRef<HTMLDivElement>(null);
@@ -101,6 +102,10 @@ export function ChristmasMagic() {
       <Snowfall />
       <div ref={flight} className="magic-flyby" data-direction="right">
         <div className="magic-sleigh">
+          <div className="magic-tow">
+            <svg className="magic-rope" viewBox="0 0 200 40" preserveAspectRatio="none"><path d="M200 20 Q150 34 100 20 T0 20" /></svg>
+            <div className="magic-poster"><img src={poster.url} loading="lazy" alt="" /></div>
+          </div>
           <img src={santa} loading="lazy" width={1152} height={576} alt="" />
           <div className="magic-trail">{Array.from({ length: 20 }, (_, i) => <span key={i} className={`magic-dust magic-dust-${i % 5}`} style={{ left: `${i * 5}%`, animationDelay: `${-i * 0.09}s` }}>✦</span>)}</div>
         </div>
