@@ -8,9 +8,38 @@ import santa from "@/assets/santa-flyby.png";
 export function ChristmasMagic() {
   const flight = useRef<HTMLDivElement>(null);
   const sound = useRef<ChristmasSound | null>(null);
+  const autoStarted = useRef(false);
+  const starting = useRef(false);
   const [enabled, setEnabled] = useState(false);
   const [quiet, setQuiet] = useState(false);
   const [reduced, setReduced] = useState(false);
+
+  async function startSound() {
+    if (starting.current) return;
+    starting.current = true;
+    sound.current ??= new ChristmasSound();
+    try {
+      const running = await sound.current.start();
+      if (running) autoStarted.current = true;
+      setEnabled(running);
+    } catch { sound.current.stop(); setEnabled(false); }
+    finally { starting.current = false; }
+  }
+
+  useEffect(() => {
+    const activate = (event: Event) => {
+      if (autoStarted.current || starting.current || quiet || document.hidden || reduced) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-christmas-sound], video, audio, input, [data-slot="dialog-content"]')) return;
+      void startSound();
+    };
+    document.addEventListener("pointerup", activate);
+    document.addEventListener("keydown", activate);
+    return () => {
+      document.removeEventListener("pointerup", activate);
+      document.removeEventListener("keydown", activate);
+    };
+  }, [quiet, reduced]);
 
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
@@ -62,12 +91,9 @@ export function ChristmasMagic() {
   }, [reduced, quiet]);
 
   async function toggle() {
+    autoStarted.current = true;
     if (enabled) { sound.current?.stop(); setEnabled(false); return; }
-    sound.current ??= new ChristmasSound();
-    try {
-      const running = await sound.current.start();
-      setEnabled(running);
-    } catch { sound.current.stop(); setEnabled(false); }
+    await startSound();
   }
 
   return <>
@@ -80,7 +106,7 @@ export function ChristmasMagic() {
         </div>
       </div>
     </div>}
-    <Button variant="gold" size="icon" className="fixed bottom-5 left-3 z-40" disabled={quiet} onClick={() => void toggle()} aria-pressed={enabled} aria-label={enabled ? "Mute Christmas sounds" : "Play Christmas sounds"} title={enabled ? "Mute Christmas sounds" : "Play Christmas sounds"}>
+    <Button data-christmas-sound variant="gold" size="icon" className="fixed bottom-5 left-3 z-40" disabled={quiet} onClick={() => void toggle()} aria-pressed={enabled} aria-label={enabled ? "Mute Christmas sounds" : "Play Christmas sounds"} title={enabled ? "Mute Christmas sounds" : "Play Christmas sounds"}>
       {enabled ? <Volume2 /> : <VolumeX />}
     </Button>
   </>;
