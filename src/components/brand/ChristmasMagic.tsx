@@ -53,7 +53,7 @@ export function ChristmasMagic() {
           { opacity: 1, offset: 0.85 },
           { transform: transform(path.toX, path.toY), opacity: 0 },
         ], { duration: path.duration, easing: "ease-in-out" });
-        sound.current?.laugh();
+        sound.current?.greet(path.duration);
       }
       timer = setTimeout(pass, 10000 + Math.random() * 12000);
     };
@@ -67,7 +67,6 @@ export function ChristmasMagic() {
     try {
       const running = await sound.current.start();
       setEnabled(running);
-      if (running) sound.current.laugh();
     } catch { sound.current.stop(); setEnabled(false); }
   }
 

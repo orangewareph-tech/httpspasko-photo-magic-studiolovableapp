@@ -18,10 +18,34 @@ export function magicFlight(random = Math.random) {
   };
 }
 
+export const SANTA_GREETINGS = [
+  "Merry Christmas!",
+  "Hohohoho!",
+  "MERRY CHRISTMAS and a Happy new year!",
+] as const;
+
+const GREETING_PARTS = [
+  ["Merry", "Christmas!"],
+  ["Ho", "ho", "ho", "ho!"],
+  ["Merry", "Christmas", "and a", "Happy", "new year!"],
+];
+
+export function santaGreeting(random = Math.random) {
+  const index = Math.min(2, Math.max(0, Math.floor(random() * 3)));
+  return { text: SANTA_GREETINGS[index], parts: GREETING_PARTS[index] ?? [] };
+}
+
+// Approach the screen's center, then recede; never exceed device volume.
+export function santaVolume(progress: number) {
+  const proximity = Math.sin(Math.PI * Math.min(1, Math.max(0, progress)));
+  return 0.25 + 0.75 * proximity * proximity;
+}
+
 export class ChristmasSound {
   private context: AudioContext | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private generation = 0;
+  private greetingTimer: ReturnType<typeof setTimeout> | undefined;
 
   async start() {
     this.stop();
@@ -54,19 +78,34 @@ export class ChristmasSound {
     return true;
   }
 
-  laugh() {
+  greet(duration: number) {
     if (!this.context || this.context.state !== "running" || !("speechSynthesis" in window)) return;
-    if (window.speechSynthesis.speaking) return;
-    const voice = new SpeechSynthesisUtterance("Ho, ho, ho!");
-    voice.lang = "en-US"; voice.pitch = 0.65; voice.rate = 0.8; voice.volume = 0.65;
+    clearTimeout(this.greetingTimer);
+    window.speechSynthesis.cancel();
+    const generation = this.generation;
+    const greeting = santaGreeting();
+    const started = performance.now();
     const available = window.speechSynthesis.getVoices();
-    voice.voice = available.find(v => /david|george|daniel|male/i.test(v.name)) ?? available.find(v => v.lang.startsWith("en")) ?? null;
-    window.speechSynthesis.speak(voice);
+    const selected = available.find(v => /david|george|daniel|male/i.test(v.name)) ?? available.find(v => v.lang.startsWith("en")) ?? null;
+    // Engines ignore volume changes during an utterance. Short connected phrases
+    // let each spoken part use Santa's current distance without restarting speech.
+    const speakPart = (index: number) => {
+      const text = greeting.parts[index];
+      if (!text || generation !== this.generation || document.hidden || this.context?.state !== "running") return;
+      const voice = new SpeechSynthesisUtterance(text);
+      voice.lang = "en-US"; voice.pitch = 0.65; voice.rate = 1.25;
+      voice.volume = santaVolume((performance.now() - started) / duration);
+      voice.voice = selected;
+      voice.onend = () => speakPart(index + 1);
+      window.speechSynthesis.speak(voice);
+    };
+    this.greetingTimer = setTimeout(() => speakPart(0), duration * 0.12);
   }
 
   stop() {
     this.generation++;
     clearTimeout(this.timer);
+    clearTimeout(this.greetingTimer);
     if (this.context && this.context.state !== "closed") void this.context.close().catch(() => {});
     this.context = null;
     if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
