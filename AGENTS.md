@@ -35,7 +35,7 @@ use the editor.
 - Storage buckets are private (`order-photos`, `site-media`); browsers only get short-lived signed URLs — workspace blocks public buckets.
 - Prices are always read from `app_settings` on the server when creating an order — never trust client prices.
 - Orders move to Payment Verified only by an admin; AI generation runs one style per server call from the admin dashboard — avoids worker timeouts.
-- The first account to sign up becomes admin (trigger `handle_first_admin`); roles live in `user_roles`.
+- Admin roles are granted manually in `user_roles` (no signup trigger) — prevents strangers claiming admin.
 - The homepage Christmas studio presentation lives in a dedicated section and reads the shared catalog and site settings, so visual redesigns do not change checkout rules.
 - Checkout uses a gated photo/template/payment sequence; the stored template is generated first, followed by the remaining catalog styles, so every order still includes five photos.
 - Generation and retries require a stored admin payment-verification timestamp, not just a failed/processing status, to prevent unpaid generation.
